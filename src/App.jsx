@@ -1,16 +1,8 @@
 import { useMemo, useState } from 'react'
-import type { ChangeEvent } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
-type CompanyRule = {
-  id: string
-  name: string
-  preferredKeywords: string[]
-  bannedKeywords: string[]
-}
-
-const COMPANY_RULES: CompanyRule[] = [
+const COMPANY_RULES = [
   {
     id: 'google',
     name: 'Google',
@@ -37,18 +29,18 @@ const COMPANY_RULES: CompanyRule[] = [
   },
 ]
 
-function cleanWords(text: string): string[] {
+function cleanWords(text) {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean)
 }
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
 
-async function extractTextFromPdf(file: File): Promise<string> {
+async function extractTextFromPdf(file) {
   const arrayBuffer = await file.arrayBuffer()
   const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
   const pdf = await loadingTask.promise
 
-  const pageTexts: string[] = []
+  const pageTexts = []
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber)
     const textContent = await page.getTextContent()
@@ -62,7 +54,7 @@ async function extractTextFromPdf(file: File): Promise<string> {
   return pageTexts.join('\n').trim()
 }
 
-function scoreResume(text: string, jobDescription: string, company: CompanyRule): number {
+function scoreResume(text, jobDescription, company) {
   if (!text.trim()) return 0
 
   const resumeWords = cleanWords(text)
@@ -89,7 +81,7 @@ function scoreResume(text: string, jobDescription: string, company: CompanyRule)
   return total
 }
 
-function getStageLabels(score: number): string[] {
+function getStageLabels(score) {
   if (score === 0) return ['Upload Resume', 'Select Company', 'Run ATS']
   if (score < 50) return ['Extract Sections', 'Keyword Scan', 'Rule Check']
   if (score < 80) return ['Extract Sections', 'Keyword Scan', 'Good Match']
@@ -101,7 +93,7 @@ function App() {
   const [resumeText, setResumeText] = useState('')
   const [jobDescription, setJobDescription] = useState('')
   const [fileName, setFileName] = useState('')
-  const [score, setScore] = useState<number | null>(null)
+  const [score, setScore] = useState(null)
   const [hasCalculated, setHasCalculated] = useState(false)
   const [message, setMessage] = useState('Upload resume + add job description, then click Calculate ATS Score.')
 
@@ -117,7 +109,7 @@ function App() {
     return selectedCompany.preferredKeywords.filter((word) => lowerText.includes(word))
   }, [resumeText, jobDescription, selectedCompany])
 
-  async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
+  async function handleFileUpload(event) {
     const file = event.target.files?.[0]
     if (!file) return
 
